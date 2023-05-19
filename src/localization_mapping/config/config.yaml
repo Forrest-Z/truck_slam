@@ -1,0 +1,107 @@
+dir:
+  save_map_directory: "/slam_data/map"
+  key_frames_dir: "/slam_data/key_frames"
+  traj_dir: "/slam_data/traj"
+
+topic:
+  imuTopic: "/imu_data"                             # IMU data
+  pointCloudTopic: "/rslidar_points"                   # Point cloud data
+  gnssPoseTopic: "/navsat/odom"                        # gnss data
+  extractedCloudTopic: "deskew/cloud_deskewed"         # point cloud after de-skew
+  cloudInfoTopic: "feature/cloud_info"                 # cloud info after feature extration
+  cornerTopic: "feature/cloud_corner"                  # cloud corner after feature extration
+  surfaceTopic: "feature/cloud_surface"                # cloud surface after feature extration
+  laserOdomTopic: "front_end/laser_odom"               # 当前帧前端优化的激光里程计    
+  baseOdomTopic:  "front_end/base_odom"                # 激光里程计在车体中心位置的里程计（前轮轴中心）     
+  laserFramePoseTopic: "front_end/laser_frame_pose"    # 当前帧的角点和平面点，用于与后端的6DoF进行配对      
+  keyFrameTopic: "opt_key_frames"                       # key frames 3d(translation, index)
+  loopPoseTopic: "loop_closure_detection"              # 回环检测结果 
+  optOdomTopic: "mapping/odometry"                     # 后端融合后雷达里程计
+  imuOdomTopic: "odometry/imu"                         # 和后端雷达里程计融合后imu里程计
+  imuBaseOdomTopic: "odometry/imu_base"                # imu里程计在车体中心位置的里程计（前轮轴中心）    
+
+frame:
+  laserFrame: rslidar                                  # 雷达中心
+  imuFrame: imu
+  baselinkFrame: base_link                             # 前轮轴中心
+  odometryFrame: odom
+  mapFrame: map
+
+lidar:
+  sensor_type: rs                             # lidar sensor type, 'velodyne' or 'ouster' or 'livox' or 'rs'
+  N_SCAN: 80                                  # number of lidar channel (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6 , Rs: 32 , 80)
+  Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000 , Rs: 1800) 10Hz
+  downsampleRate: 2                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
+  lidarMinRange: 1.0                          # default: 1.0, minimum lidar range to be used
+  lidarMaxRange: 1000.0                       # default: 1000.0, maximum lidar range to be used
+  send_by_row: false                          # default: false , rslidar can send cloud by row
+
+imu:
+  imuAccNoise: 1.0e-3
+  imuGyrNoise: 1.0e-3
+  imuAccBiasN: 1.0e-5
+  imuGyrBiasN: 1.0e-5 
+  imuGravity: 9.7879
+  imuRPYWeight: 0.01
+  imuFrequency: 100
+  imuType: 0  # 0: 6axis, 1:9 axis
+
+gnss:
+  useImuHeadingInitialization: false           # if using gnss data, set to "true"
+  useGnssElevation: false                      # if gnss elevation is bad, set to "false"
+  gnssCovThreshold: 2.0                        # m^2, threshold for using gnss data
+  poseCovThreshold: 25.0                      # m^2, threshold for using gnss data
+
+extrinsics:         # roll(rad) , pitch(rad) , yaw(rad), x(m), y(m), z(m) 激光雷达安装导致pitch有4.5度左右的偏移
+  baselink_to_lidar: [0.0, 0.0783865, 0.0, 0.45, 0.0, 2.153]      
+  imu_to_lidar:      [0.0, 0.0783865, 0.0, 1.92, 0.0, 1.393]            
+  baselink_to_imu:   [0.0, 0.0, 0.0, -1.47, 0.0, 0.76]      
+
+cpu:
+  numberOfCores: 16                             # number of cores for mapping optimization
+  mappingProcessInterval: 0.15                  # seconds, regulate mapping frequency
+
+initMethod: other                               # 全局初始化方法 : gnss 
+
+loam_settings:
+  edgeThreshold: 1.0
+  surfThreshold: 0.1
+  edgeFeatureMinValidNum: 10
+  surfFeatureMinValidNum: 100
+
+voxel_filter:
+  odometrySurfLeafSize: 0.4                     # default: 0.4 - outdoor, 0.2 - indoor
+  mappingCornerLeafSize: 0.2                    # default: 0.2 - outdoor, 0.1 - indoor
+  mappingSurfLeafSize: 0.4                      # default: 0.4 - outdoor, 0.2 - indoor
+  featureSurfLeafSize: 0.4                     # 平面点降采样
+
+box_filter:
+  box_filter_size: [-2.0, 0.0, -1.5, 1.5, -1.0, 1.0]    # 去掉雷达后面的车厢点云 数组内容依次为min_x, max_x, min_y, max_y, min_z, max_z
+
+key_frame:
+  surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold
+  surroundingkeyframeAddingAngleThreshold: 0.2  # radians, regulate keyframe adding threshold
+  surroundingKeyframeDensity: 2.5               # meters, downsample surrounding keyframe poses   
+  surroundingKeyframeSearchRadius: 25.0         # meters, within n meters scan-to-map optimization (when loop closure disabled)
+
+motion_constraint:                              # robot motion constraint (in case you are using a 2D robot)
+  z_tollerance: 1000                            # meters
+  rotation_tollerance: 1000                     # radians
+
+loop_closure:
+  useLoopClosure: false                         
+  surroundingKeyframeSize: 50                   # submap size (when loop closure enabled)
+  historyKeyframeSearchRadius: 15.0             # meters, key frame that is within n meters from current pose will be considerd for loop closure
+  historyKeyframeSearchTimeDiff: 30.0           # seconds, key frame that is n seconds older will be considered for loop closure
+  historyKeyframeSearchNum: 25                  # number of hostory key frames will be fused into a submap for loop closure
+  historyKeyframeFitnessScore: 0.3              # icp threshold, the smaller the better alignment
+  icp_settings:
+    max_corr_dist: 30.0
+    trans_eps: 1e-6
+    euc_fitness_eps: 1e-6
+    max_iter: 100
+
+noise:
+  lidar_odometry_noise: [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-6, 1.0e-6, 1.0e-6] # x y z yaw roll pitch
+  gnss_position_noise:  [1.0e-2, 1.0e-2, 1.0e-2] # x y z
+  loop_closure_noise:   [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-6, 1.0e-6, 1.0e-6] # x y z yaw roll pitch

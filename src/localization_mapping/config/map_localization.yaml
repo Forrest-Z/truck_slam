@@ -1,0 +1,94 @@
+map_matching_node:
+  ros__parameters:
+    map_path: "/slam_data/map"
+    ### topic name
+    gnssPoseTopic: "/navsat/odom"                         # gnss data
+    cloudInfoTopic: "feature/cloud_info"                  # cloud info after feature extration
+    laserOdomTopic: "mapping/odometry"                    # 当前帧地图匹配的激光里程计       
+
+    ### frame_id
+    laserFrame: "rslidar"                                     # frame id of lidar
+    baselinkFrame: "base_link"
+    odometryFrame: "odom"
+    mapFrame: "map"
+
+    ## init method : gnss , scan_context, rviz
+    initMethod: rviz
+
+    ## lidar Settings
+    sensor_type: rs                             # lidar sensor type, 'velodyne' or 'ouster' or 'livox' or 'rs'
+    N_SCAN: 80                                  # number of lidar channel (i.e., Velodyne/Ouster: 16, 32, 64, 128, Livox Horizon: 6 , Rs: 32 , 80)
+    Horizon_SCAN: 1800                          # lidar horizontal resolution (Velodyne:1800, Ouster:512,1024,2048, Livox Horizon: 4000 , Rs: 1800) 10Hz
+    downsampleRate: 1                           # default: 1. Downsample your data if too many points. i.e., 16 = 64 / 4, 16 = 16 / 1
+    lidarMinRange: 1.0                          # default: 1.0, minimum lidar range to be used
+    lidarMaxRange: 1000.0                       # default: 1000.0, maximum lidar range to be used
+    send_by_row: false                          # default: false , rslidar can send cloud by row
+
+    imuRPYWeight: 0.01
+
+  ## voxel filter paprams
+    odometrySurfLeafSize: 0.4                     # default: 0.4 - outdoor, 0.2 - indoor
+    mappingCornerLeafSize: 0.2                    # default: 0.2 - outdoor, 0.1 - indoor
+    mappingSurfLeafSize: 0.4                      # default: 0.4 - outdoor, 0.2 - indoor
+    featureSurfLeafSize: 0.4                     # 平面点降采样
+
+  # gnss Settings
+    useImuHeadingInitialization: false           # if using gnss data, set to "true"
+    useGnssElevation: false                      # if gnss elevation is bad, set to "false"
+    gnssCovThreshold: 2.0                        # m^2, threshold for using gnss data
+    poseCovThreshold: 25.0                      # m^2, threshold for using gnss data
+
+  ## LOAM feature threshold
+    edgeThreshold: 1.0
+    surfThreshold: 0.1
+    edgeFeatureMinValidNum: 10
+    surfFeatureMinValidNum: 100
+
+    ## robot motion constraint (in case you are using a 2D robot)
+    z_tollerance: 1000                            # meters
+    rotation_tollerance: 1000                     # radians
+
+  # CPU Params
+    numberOfCores: 16                             # number of cores for mapping optimization
+
+  # Surrounding map
+    surroundingkeyframeAddingDistThreshold: 1.0   # meters, regulate keyframe adding threshold
+    surroundingkeyframeAddingAngleThreshold: 0.2  # radians, regulate keyframe adding threshold
+    surroundingKeyframeDensity: 2.5               # meters, downsample surrounding keyframe poses   
+    surroundingKeyframeSearchRadius: 25.0         # meters, within n meters scan-to-map optimization (when loop closure disabled)
+
+    box_filter_size: [-80.0, 80.0, -80.0, 80.0, -80.0, 80.0]
+    
+    matching_method: NDT         # LOAM or NDT
+
+    ## 匹配相关参数
+    NDT:
+      res : 1.0
+      step_size : 0.1
+      trans_eps : 0.01
+      max_iter : 30
+
+    ## ScanContext params:
+    scan_context:
+      scan_context_path: "/slam_data/key_frames/surface"
+      lidar_height: 2.0
+      # a. max_radius:
+      max_radius: 80.0
+      # b. resolution:
+      num_rings: 20
+      num_sectors: 60
+      # c. ring key indexing interval:
+      indexing_interval: 1
+      # d. min. key frame sequence distance:
+      min_key_frame_seq_distance: 50
+      # e. num. of nearest-neighbor candidates to check:
+      num_candidates: 10
+      # f. sector key fast alignment search ratio:
+      #   avoid brute-force match using sector key
+      fast_alignment_search_ratio: 0.1
+      # g. scan context distance threshold for proposal generation:
+      #   0.4-0.6 is good choice for using with robust kernel (e.g., Cauchy, DCS) + icp fitness threshold 
+      #   if not, recommend 0.1-0.15
+      scan_context_distance_thresh: 0.15
+      # i.e., remaking tree frequency, to avoid non-mandatory every remaking, to save time cost / if you want to find a very recent revisits use small value of it (it is enough fast ~ 5-50ms wrt N.).
+      tree_making_period: 50

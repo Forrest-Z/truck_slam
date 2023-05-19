@@ -1,0 +1,16 @@
+/*
+ * @Descripttion: 
+ * @Author: Gang Wang
+ * @Date: 2023-02-09 20:03:56
+ */
+#ifndef LOCALIZATION_MAPPING_GLOBAL_DEFINATION_H_IN_
+#define LOCALIZATION_MAPPING_GLOBAL_DEFINATION_H_IN_
+
+#include <string>
+
+namespace truck_slam {
+
+const std::string WORK_SPACE_PATH = "/home/robot/wg/truck_slam/src/localization_mapping";
+
+}
+#endif
